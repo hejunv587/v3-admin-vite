@@ -105,7 +105,9 @@ function createRequest(service: AxiosInstance) {
         // 携带 Token
         Authorization: token ? `Bearer ${token}` : undefined,
         "Content-Type": "application/json"
+        // withCredentials: true,
       },
+      // withCredentials: true,
       timeout: 5000,
       baseURL: import.meta.env.VITE_BASE_API,
       data: {}

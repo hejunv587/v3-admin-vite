@@ -4,7 +4,8 @@ import type * as Login from "./types/login"
 /** 获取登录验证码 */
 export function getLoginCodeApi() {
   return request<Login.LoginCodeResponseData>({
-    url: "login/code",
+    // url: "login/code",
+    url: "auth/captcha", //获取验证码接口
     method: "get"
   })
 }
@@ -12,7 +13,8 @@ export function getLoginCodeApi() {
 /** 登录并返回 Token */
 export function loginApi(data: Login.LoginRequestData) {
   return request<Login.LoginResponseData>({
-    url: "users/login",
+    // url: "users/login",
+    url: "auth/login",
     method: "post",
     data
   })
@@ -21,7 +23,8 @@ export function loginApi(data: Login.LoginRequestData) {
 /** 获取用户详情 */
 export function getUserInfoApi() {
   return request<Login.UserInfoResponseData>({
-    url: "users/info",
+    // url: "users/info",
+    url: "auth/profile",
     method: "get"
   })
 }
