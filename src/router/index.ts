@@ -133,6 +133,36 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: "/products",
+    component: Layouts,
+    redirect: "/table/category",
+    name: "产品管理",
+    meta: {
+      title: "产品管理",
+      elIcon: "Grid"
+    },
+    children: [
+      {
+        path: "category",
+        component: () => import("@/views/products/category/index.vue"),
+        name: "产品分类",
+        meta: {
+          title: "产品分类",
+          keepAlive: true
+        }
+      },
+      {
+        path: "vxe-table",
+        component: () => import("@/views/table/vxe-table/index.vue"),
+        name: "VxeTable",
+        meta: {
+          title: "Vxe Table",
+          keepAlive: true
+        }
+      }
+    ]
+  },
+  {
     path: "/menu",
     component: Layouts,
     redirect: "/menu/menu1",
