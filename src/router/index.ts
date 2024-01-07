@@ -152,6 +152,35 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       },
       {
+        path: "products",
+        component: () => import("@/views/products/products/index.vue"),
+        name: "产品",
+        meta: {
+          title: "产品",
+          keepAlive: true
+        }
+      },
+      {
+        path: "productview",
+        component: () => import("@/views/products/products/view.vue"),
+        name: "产品查看",
+        meta: {
+          title: "产品查看",
+          keepAlive: true,
+          hidden: true
+        }
+      },
+      {
+        path: "productedit",
+        component: () => import("@/views/products/products/edit.vue"),
+        name: "产品编辑",
+        meta: {
+          title: "产品编辑",
+          keepAlive: true,
+          hidden: true
+        }
+      },
+      {
         path: "vxe-table",
         component: () => import("@/views/table/vxe-table/index.vue"),
         name: "VxeTable",
