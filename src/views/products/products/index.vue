@@ -22,6 +22,13 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 
 //#region 增
 const dialogVisible = ref<boolean>(false)
+const handleAdd = () => {
+  router.push({ path: "/products/productedit" })
+
+  //   currentUpdateId.value = row.id
+  //   formData.name = row.name
+  //   dialogVisible.value = true
+}
 // const formRef = ref<FormInstance | null>(null)
 // const formData = reactive({
 //   name: ""
@@ -160,7 +167,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getProd
     <el-card v-loading="loading" shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增产品</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="handleAdd">新增产品</el-button>
           <el-button type="danger" :icon="Delete">批量删除</el-button>
         </div>
         <div>
@@ -201,6 +208,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getProd
         />
       </div>
     </el-card>
+
     <!-- 新增/修改 -->
     <el-dialog
       v-model="dialogVisible"

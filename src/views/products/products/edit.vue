@@ -58,10 +58,10 @@
           <div>
             <div v-for="(item, index) in advantages" :key="index" class="function-item">
               <el-input v-model="advantages[index]" class="function-input" />
-              <el-button @click="removeFunction(index)" type="danger" class="remove-button">Remove</el-button>
+              <el-button @click="removeItem(advantages, index)" type="danger" class="remove-button">Remove</el-button>
             </div>
             <div class="add-button-container">
-              <el-button @click="addFunction" type="primary">Add Function</el-button>
+              <el-button @click="addItem(advantages)" type="primary">Add Function</el-button>
             </div>
           </div>
         </el-form-item>
@@ -73,10 +73,10 @@
           <div>
             <div v-for="(item, index) in services" :key="index" class="function-item">
               <el-input v-model="services[index]" class="function-input" />
-              <el-button @click="removeFunction(index)" type="danger" class="remove-button">Remove</el-button>
+              <el-button @click="removeItem(services, index)" type="danger" class="remove-button">Remove</el-button>
             </div>
             <div class="add-button-container">
-              <el-button @click="addFunction" type="primary">Add Function</el-button>
+              <el-button @click="addItem(services)" type="primary">Add Function</el-button>
             </div>
           </div>
         </el-form-item>
@@ -86,10 +86,10 @@
           <div>
             <div v-for="(item, index) in whychoose" :key="index" class="function-item">
               <el-input v-model="whychoose[index]" class="function-input" />
-              <el-button @click="removeFunction(index)" type="danger" class="remove-button">Remove</el-button>
+              <el-button @click="removeItem(whychoose, index)" type="danger" class="remove-button">Remove</el-button>
             </div>
             <div class="add-button-container">
-              <el-button @click="addFunction" type="primary">Add Function</el-button>
+              <el-button @click="addItem(whychoose)" type="primary">Add Function</el-button>
             </div>
           </div>
         </el-form-item>
@@ -99,10 +99,10 @@
           <div>
             <div v-for="(item, index) in note" :key="index" class="function-item">
               <el-input v-model="note[index]" class="function-input" />
-              <el-button @click="removeFunction(index)" type="danger" class="remove-button">Remove</el-button>
+              <el-button @click="removeItem(note, index)" type="danger" class="remove-button">Remove</el-button>
             </div>
             <div class="add-button-container">
-              <el-button @click="addFunction" type="primary">Add Function</el-button>
+              <el-button @click="addItem(note)" type="primary">Add Function</el-button>
             </div>
           </div>
         </el-form-item>
@@ -118,45 +118,42 @@
             alt="Product Cover Image"
             style="max-width: 100%; max-height: 300px; object-fit: cover"
           /> -->
-          <el-upload
+          <!-- <el-upload
             class="avatar-uploader"
             :action="uploadUrl"
             :show-file-list="false"
             :on-success="handleCoverImageUpload"
             :before-upload="beforeAvatarUpload"
-          >
-            <!-- <template #file="{ file }"> -->
-            <div class="image-container">
-              <img
-                v-if="product.coverImageUrl"
-                :src="product.coverImageUrl"
-                alt="Product Cover Image"
-                class="product-image"
-              />
-              <span v-if="product.coverImageUrl" class="el-upload-list__item-actions">
-                <span
-                  class="el-upload-list__item-preview"
-                  @click.stop="handlePictureCardPreview(product.coverImageUrl)"
-                >
-                  <el-icon><zoom-in /></el-icon>
-                </span>
-                <!-- <span class="el-upload-list__item-preview" @click.stop="handlePictureCardPreview(file)">
+          > -->
+          <!-- <template #file="{ file }"> -->
+          <div class="image-container">
+            <img
+              v-if="product.coverImageUrl"
+              :src="product.coverImageUrl"
+              alt="Product Cover Image"
+              class="product-image"
+            />
+            <span v-if="product.coverImageUrl" class="el-upload-list__item-actions">
+              <span class="el-upload-list__item-preview" @click.stop="handlePictureCardPreview(product.coverImageUrl)">
+                <el-icon><zoom-in /></el-icon>
+              </span>
+              <!-- <span class="el-upload-list__item-preview" @click.stop="handlePictureCardPreview(file)">
                   <el-icon><Download /></el-icon>
                 </span> -->
-                <span class="el-upload-list__item-preview" @click.stop="handleRemove()">
-                  <el-icon><Delete /></el-icon>
-                </span>
+              <span class="el-upload-list__item-preview" @click.stop="handleRemove()">
+                <el-icon><Delete /></el-icon>
               </span>
-            </div>
-            <!-- </template> -->
-            <el-icon @click.stop="handleAddUpload" v-if="!product.coverImageUrl" class="avatar-uploader-icon"
-              ><Plus
-            /></el-icon>
-          </el-upload>
+            </span>
+          </div>
+          <!-- </template> -->
+          <el-icon @click.stop="handleAddUpload" v-if="!product.coverImageUrl" class="avatar-uploader-icon"
+            ><Plus
+          /></el-icon>
+          <!-- </el-upload> -->
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="submitForm">Save</el-button>
+          <el-button type="primary" @click="submitForm">保存</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -194,7 +191,15 @@
         />
       </div>
       <el-button type="primary" @click="confirmSelection">确定选择</el-button>
-      <el-button @click="uploadNewAttachment">上传新附件</el-button>
+      <el-upload
+        class="avatar-uploader"
+        :action="uploadUrl"
+        :show-file-list="false"
+        :on-success="handleCoverImageUpload"
+        :before-upload="beforeAvatarUpload"
+      >
+        <el-button @click="uploadNewAttachment">上传新附件</el-button>
+      </el-upload>
     </div>
   </el-dialog>
 </template>
@@ -246,20 +251,39 @@ const route = useRoute() // Vue Router's useRoute hook
 const uploadUrl = import.meta.env.VITE_BASE_API + "/upload/album1"
 
 const getProductData = () => {
-  const productId = route.query.id as string
-  loading.value = true
-  getProductApi(productId)
-    .then(async (res) => {
-      product.value = res.data as GetProductDataMore
-      setFormValues() // Populate form fields
-      product.value.coverImageUrl = (await getImageUrl(product.value.cover.id)) || ""
-    })
-    .catch()
-    .finally(() => {
-      loading.value = false
-    })
+  if (route.query.id) {
+    const productId = route.query.id as string
+    loading.value = true
+    getProductApi(productId)
+      .then(async (res) => {
+        product.value = res.data as GetProductDataMore
+        setFormValues() // Populate form fields
+        product.value.coverImageUrl = (await getImageUrl(product.value.cover.id)) || ""
+      })
+      .catch()
+      .finally(() => {
+        loading.value = false
+      })
+  } else {
+    initFormValues()
+  }
 }
 
+const initFormValues = () => {
+  product.value = {
+    model: "",
+    serie: "",
+    description: "",
+    overview: "",
+    functions: "",
+    advantages: "",
+    technical_parameters: "",
+    name: "",
+    services: "",
+    whychoose: "",
+    note: ""
+  }
+}
 const setFormValues = () => {
   functions.value = product.value?.functions.split(",") || []
   advantages.value = product.value?.advantages.split(",") || []
@@ -272,13 +296,15 @@ const setFormValues = () => {
 // const handleCoverImageUpload = async (response: any, file: any) => {
 const handleCoverImageUpload = async (response: any) => {
   if (response.success && product.value) {
-    product.value.coverImageUrl = await getImageUrl(response.data.file.id)
-    product.value.cover = {
-      id: response.data.file.id
-      // product: {
-      //   id: product.value.id
-      // }
-    }
+    // product.value.coverImageUrl = await getImageUrl(response.data.file.id)
+    // product.value.cover = {
+    //   id: response.data.file.id
+    //   // product: {
+    //   //   id: product.value.id
+    //   // }
+    // }
+    //重新加载附件列表
+    getUploadData()
   }
 }
 
@@ -342,13 +368,13 @@ const note = ref<string[]>([])
 const technical_parameters = ref<string[]>([])
 // Add refs for other fields...
 
-const addFunction = () => {
-  functions.value.push("")
-}
+// const addFunction = () => {
+//   functions.value.push("")
+// }
 
-const removeFunction = (index: number) => {
-  functions.value.splice(index, 1)
-}
+// const removeFunction = (index: number) => {
+//   functions.value.splice(index, 1)
+// }
 
 const removeItem = (itemList: any[], index: number) => {
   itemList.splice(index, 1)
@@ -416,12 +442,25 @@ const getUploadData = () => {
 }
 
 const toggleSelection = (image: ExtendedUploadDataType) => {
+  // 对于单选，首先清除所有图片的选中状态
+  images.value.forEach((image) => {
+    image.selected = false
+  })
+
+  // 然后切换当前图片的选中状态
   image.selected = !image.selected
 }
 
-const confirmSelection = () => {
-  const selectedImages = images.value.filter((img) => img.selected)
+const confirmSelection = async () => {
+  const selectedImages = images.value.filter((img) => img.selected).map((img) => ({ id: img.id }))
   console.log("选中的图片:", selectedImages)
+  // 执行选中图片的操作
+  if (product.value) {
+    product.value.cover = selectedImages[0]
+    product.value.coverImageUrl = (await getImageUrl(product.value.cover.id)) || ""
+  }
+  // 关闭弹窗
+  dialogUplaod.value = false
 }
 
 const uploadNewAttachment = () => {
@@ -549,6 +588,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUplo
 .button-area {
   margin-top: 10px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between; /* 在按钮和分页控件之间留出空间 */
   align-items: center; /* 垂直居中 */
 }

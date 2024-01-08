@@ -42,12 +42,34 @@
         </ul>
       </div>
     </el-card>
+
+    <!-- 添加产品图片 -->
+    <el-card>
+      <!-- 标题 -->
+      <div class="clearfix">
+        <span><strong>产品图片</strong></span>
+      </div>
+      <!-- 展示已上传的图片 -->
+      <div class="images-container">
+        <div v-for="(image, index) in uploadedImages" :key="index" class="image-item">
+          <img :src="image.url" class="uploaded-image" />
+          <!-- <el-button type="danger" icon="el-icon-delete" class="remove-button" @click="removeImage(index)"> -->
+          <el-icon :size="20" class="remove-button" @click="removeImage(index)">
+            <Delete />
+          </el-icon>
+          <!-- </el-button> -->
+        </div>
+      </div>
+
+      <!-- 打开图片库的按钮 -->
+      <el-button type="primary" @click="openImageLibrary">添加图片</el-button>
+    </el-card>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { getImageUrlApi, getProductApi } from "@/api/products/product"
-import { type GetProductData } from "@/api/products/product/types"
+import { type GetProductData, Upload } from "@/api/products/product/types"
 import { onMounted, ref } from "vue"
 import { useRoute } from "vue-router"
 
@@ -60,9 +82,14 @@ type GetProductDataMore = GetProductData & {
   coverImageUrl: string
 }
 
+type ProductImage = Upload & {
+  url: string
+}
+
 const product = ref<GetProductDataMore>()
 const loading = ref<boolean>(false)
 const route = useRoute() // Vue Router's useRoute hook
+const uploadedImages = ref<ProductImage[]>([])
 
 const getProductData = () => {
   const productId = route.query.id as string
@@ -71,6 +98,13 @@ const getProductData = () => {
     .then(async (res) => {
       product.value = res.data as GetProductDataMore
       product.value.coverImageUrl = (await getImageUrl(product.value.cover.id)) || ""
+      const imagePromises = product.value.images.map(async (image) => {
+        return {
+          ...image,
+          url: await getImageUrl(image.id)
+        }
+      })
+      uploadedImages.value = await Promise.all(imagePromises)
     })
     .catch()
     .finally(() => {
@@ -85,7 +119,57 @@ const getImageUrl = (id: string): Promise<string> => {
   })
 }
 
+// 打开图片库的方法
+const openImageLibrary = () => {
+  // 实现打开图片库的逻辑
+  // 比如使用一个对话框组件来显示可选图片
+}
+
+// 移除图片的方法
+const removeImage = (index: number) => {
+  uploadedImages.value.splice(index, 1)
+}
+
 onMounted(() => {
   getProductData()
 })
 </script>
+
+<style lang="scss" scoped>
+.app-container {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.images-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.image-item {
+  margin: 10px;
+  position: relative;
+}
+
+.uploaded-image {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+}
+
+.remove-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  color: red; /* 设置图标颜色为红色 */
+  cursor: pointer;
+  background-color: white; /* 背景色 */
+  border-radius: 50%; /* 圆形背景 */
+  padding: 5px; /* 内边距 */
+}
+
+/* 悬浮在删除图标上时的样式 */
+.remove-button:hover {
+  color: darkred; /* 悬浮时颜色变深 */
+  background-color: #f5f5f5; /* 悬浮时背景颜色变化 */
+}
+</style>
