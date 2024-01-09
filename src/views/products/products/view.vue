@@ -7,38 +7,54 @@
           alt="Product Cover Image"
           style="max-width: 100%; max-height: 300px; object-fit: cover"
         />
-        <p><strong>Model:</strong> {{ product.model }}</p>
-        <p><strong>Serie:</strong> {{ product.serie }}</p>
+        <p><strong>型号:</strong> {{ product.model }}</p>
+        <p><strong>系列:</strong> {{ product.serie.name }}</p>
         <!-- Other fields... -->
 
-        <p><strong>Description:</strong> {{ product.description }}</p>
-        <p><strong>Overview:</strong> {{ product.overview }}</p>
+        <p><strong>产品详情:</strong> {{ product.description }}</p>
+        <!-- <p><strong>Overview:</strong> {{ product.overview }}</p> -->
 
-        <p><strong>Functions:</strong></p>
+        <p><strong>功能:</strong></p>
         <ul>
-          <li v-for="(func, index) in product.functions.split(',')" :key="index">{{ func }}</li>
+          <li v-for="(item, index) in product.functions ? product.functions.split(',') : []" :key="index">
+            {{ item }}
+          </li>
         </ul>
 
-        <p><strong>Advantages:</strong></p>
+        <p><strong>技术参数:</strong></p>
         <ul>
-          <li v-for="(advantage, index) in product.advantages.split(',')" :key="index">{{ advantage }}</li>
+          <li
+            v-for="(item, index) in product.technical_parameters ? product.technical_parameters.split(',') : []"
+            :key="index"
+          >
+            {{ item }}
+          </li>
+        </ul>
+
+        <p><strong>优势:</strong></p>
+        <ul>
+          <li v-for="(item, index) in product.advantages ? product.advantages.split(',') : []" :key="index">
+            {{ item }}
+          </li>
         </ul>
 
         <!-- Repeat the above pattern for other fields... -->
 
-        <p><strong>Services:</strong></p>
+        <p><strong>服务:</strong></p>
         <ul>
-          <li v-for="(service, index) in product.services.split(',')" :key="index">{{ service }}</li>
+          <li v-for="(item, index) in product.services ? product.services.split(',') : []" :key="index">{{ item }}</li>
         </ul>
 
-        <p><strong>Why Choose:</strong></p>
+        <p><strong>选择原因:</strong></p>
         <ul>
-          <li v-for="(reason, index) in product.whychoose.split(',')" :key="index">{{ reason }}</li>
+          <li v-for="(item, index) in product.whychoose ? product.whychoose.split(',') : []" :key="index">
+            {{ item }}
+          </li>
         </ul>
 
-        <p><strong>Note:</strong></p>
+        <p><strong>注意事项:</strong></p>
         <ul>
-          <li v-for="(note, index) in product.note.split(',')" :key="index">{{ note }}</li>
+          <li v-for="(item, index) in product.note ? product.note.split(',') : []" :key="index">{{ item }}</li>
         </ul>
       </div>
     </el-card>

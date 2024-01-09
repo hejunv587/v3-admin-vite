@@ -6,14 +6,21 @@
           <el-input v-model="product.model" />
         </el-form-item>
 
+        <el-form-item label="产品名称">
+          <el-input v-model="product.name" />
+        </el-form-item>
+
         <el-form-item label="系列">
-          <el-input v-model="product.serie" />
+          <!-- <el-input v-model="product.serie" /> -->
+          <el-select v-model="product.serie" placeholder="请选择系列">
+            <el-option v-for="serie in series" :key="serie.id" :label="serie.name" :value="serie" />
+          </el-select>
         </el-form-item>
 
         <!-- Other fields... -->
-        <el-form-item label="概述">
+        <!-- <el-form-item label="概述">
           <el-input v-model="product.overview" />
-        </el-form-item>
+        </el-form-item> -->
 
         <el-form-item label="描述">
           <el-input v-model="product.description" />
@@ -212,10 +219,12 @@ import {
   createProductDataApi,
   getUploadAPi
 } from "@/api/products/product"
+import { getAllCategoryApi } from "@/api/products/category"
 import { UpdateProductRequestData, type GetProductData, Upload } from "@/api/products/product/types"
 import { ref, onMounted, watch } from "vue"
 import { useRoute } from "vue-router"
 import { usePagination } from "@/hooks/usePagination"
+import { GetCategoryData } from "@/api/products/category/types"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 // import type { UploadFile } from "element-plus"
@@ -272,20 +281,24 @@ const getProductData = () => {
 const initFormValues = () => {
   product.value = {
     model: "",
-    serie: "",
+    serie: {
+      id: "",
+      name: ""
+    },
     description: "",
     overview: "",
-    functions: "",
-    advantages: "",
-    technical_parameters: "",
-    name: "",
-    services: "",
-    whychoose: "",
-    note: ""
+    // functions: "",
+    // advantages: "",
+    // technical_parameters: "",
+    name: ""
+    // services: "",
+    // whychoose: "",
+    // note: ""
   }
 }
 const setFormValues = () => {
   functions.value = product.value?.functions.split(",") || []
+  technical_parameters.value = product.value?.technical_parameters.split(",") || []
   advantages.value = product.value?.advantages.split(",") || []
   services.value = product.value?.services.split(",") || []
   whychoose.value = product.value?.whychoose.split(",") || []
@@ -318,7 +331,7 @@ const getImageUrl = (id: string): Promise<string> => {
 const submitForm = () => {
   const formData: UpdateProductRequestData = {
     model: product.value?.model || "",
-    serie: product.value?.serie || "",
+    serie: product.value?.serie || null,
     name: product.value?.name || "",
     description: product.value?.description || "",
     overview: product.value?.overview || "",
@@ -355,8 +368,16 @@ const submitForm = () => {
   }
 }
 
+const series = ref<GetCategoryData[]>([])
+
+const getSeries = async () => {
+  const res = await getAllCategoryApi()
+  series.value = res.data
+}
+
 onMounted(() => {
   getProductData()
+  getSeries()
 })
 
 // Refs for form fields

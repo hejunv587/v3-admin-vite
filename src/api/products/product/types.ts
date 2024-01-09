@@ -1,3 +1,5 @@
+import { GetCategoryData } from "../category/types"
+
 export interface Upload {
   id: string
   name?: string
@@ -48,7 +50,7 @@ export interface QA {
 export interface UpdateProductRequestData {
   id?: number
   model: string
-  serie: string
+  serie: GetCategoryData | null
   description: string
   overview: string
   functions: string[]
@@ -82,7 +84,7 @@ export interface GetUploadRequestData {
 export interface GetProductData {
   id: number
   model: string
-  serie: string
+  serie: GetCategoryData | null
   name: string
   cover: Upload
   images: Upload[]

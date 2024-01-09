@@ -19,7 +19,7 @@ export interface GetCategoryRequestData {
 }
 
 export interface GetCategoryData {
-  createTime: string
+  createTime?: string
   id: string
   name: string
 }

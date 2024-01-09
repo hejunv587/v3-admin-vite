@@ -14,7 +14,7 @@ import router from "@/router"
 
 defineOptions({
   // 命名当前组件
-  name: "分类管理"
+  name: "产品管理"
 })
 
 const loading = ref<boolean>(false)
@@ -185,7 +185,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getProd
           <el-table-column prop="id" label="产品ID" align="center" />
           <el-table-column prop="model" label="产品编码" align="center" />
           <el-table-column prop="name" label="产品名称" align="center" />
-          <el-table-column prop="serie" label="产品系列" align="center" />
+          <el-table-column prop="serie.name" label="产品系列" align="center" />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleView(scope.row)">查看</el-button>

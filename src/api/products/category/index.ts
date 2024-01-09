@@ -35,3 +35,11 @@ export function getCategoryDataApi(params: Category.GetCategoryRequestData) {
     params
   })
 }
+
+/** 查寻全部 */
+export function getAllCategoryApi() {
+  return request<ApiResponseData<Category.GetCategoryData[]>>({
+    url: "category",
+    method: "get"
+  })
+}
