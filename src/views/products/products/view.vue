@@ -83,7 +83,7 @@
   </div>
 
   <el-dialog v-model="dialogUplaod" title="图片管理">
-    <UploadComponent :images="uploadedImages" @upload-images="handleUploadImages" />
+    <UploadComponent :selectedImages="uploadedImages" :multiple="true" @update:selectedImages="handleSelectedImages" />
   </el-dialog>
 </template>
 
@@ -158,6 +158,16 @@ const removeImage = (index: number) => {
 onMounted(() => {
   getProductData()
 })
+
+const handleSelectedImages = (selectedImages) => {
+  console.log("父组件中接收到的:", selectedImages)
+  // 处理从子组件传递过来的选中的图片
+  selectedImages.forEach((image) => {
+    uploadedImages.value.push(image)
+  })
+  // uploadedImages.value.push(selectedImages)
+  console.log("uploadedImages:", uploadedImages.value)
+}
 </script>
 
 <style lang="scss" scoped>

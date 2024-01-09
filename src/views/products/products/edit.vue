@@ -12,7 +12,7 @@
 
         <el-form-item label="系列">
           <!-- <el-input v-model="product.serie" /> -->
-          <el-select v-model="product.serie" placeholder="请选择系列">
+          <el-select v-model="product.serie" placeholder="请选择系列" value-key="name">
             <el-option v-for="serie in series" :key="serie.id" :label="serie.name" :value="serie" />
           </el-select>
         </el-form-item>

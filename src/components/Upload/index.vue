@@ -39,17 +39,22 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue"
+import { onMounted, ref } from "vue"
 import { Upload } from "@/api/products/product/types"
 import { Check } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { defineEmits } from "vue"
+import { getImageUrlApi, getUploadAPi } from "@/api/products/product"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 // Props (如果有的话)
 const props = defineProps({
-  multiple: Boolean // 控制是单选还是多选
+  multiple: Boolean, // 控制是单选还是多选
+  selectedImages: {
+    type: Array as () => ExtendedUploadDataType[],
+    default: () => [] // 提供一个默认值
+  }
 })
 
 // defineProps<{
@@ -66,39 +71,46 @@ interface ExtendedUploadDataType extends Upload {
 
 // Data
 const images = ref<ExtendedUploadDataType[]>([])
-// const loading = ref(false)
+const loading = ref(false)
 
 // Methods
-// const getUploadData = async () => {
-//   loading.value = true
-//   getUploadAPi({
-//     currentPage: paginationData.currentPage,
-//     size: paginationData.pageSize
-//   })
-//     .then(async (res) => {
-//       paginationData.total = res.data.total
+const getUploadData = async () => {
+  loading.value = true
+  getUploadAPi({
+    currentPage: paginationData.currentPage,
+    size: paginationData.pageSize
+  })
+    .then(async (res) => {
+      paginationData.total = res.data.total
 
-//       // 创建一个处理每个元素的 Promise 数组
-//       const promises = res.data.list.map(async (element: Upload) => {
-//         const url = await getImageUrl(element.id)
-//         const selected = false
-//         return { ...element, url, selected }
-//       })
+      // 创建一个处理每个元素的 Promise 数组
+      const promises = res.data.list.map(async (element: Upload) => {
+        const url = await getImageUrl(element.id)
+        const selected = false
+        return { ...element, url, selected }
+      })
 
-//       // 等待所有 Promise 完成
-//       const results = await Promise.all(promises)
+      // 等待所有 Promise 完成
+      const results = await Promise.all(promises)
 
-//       // 更新 uploadData 和 images
-//       // uploadData.value = results
-//       images.value = results
-//     })
-//     .catch(() => {
-//       uploadData.value = []
-//     })
-//     .finally(() => {
-//       loading.value = false
-//     })
-// }
+      // 更新 uploadData 和 images
+      // uploadData.value = results
+      images.value = results
+    })
+    .catch(() => {
+      images.value = []
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+const getImageUrl = (id: string): Promise<string> => {
+  return getImageUrlApi(id).then((res) => {
+    const url = res.data
+    return url
+  })
+}
 
 const toggleSelection = (image: ExtendedUploadDataType) => {
   if (!props.multiple) {
@@ -117,12 +129,16 @@ const toggleSelection = (image: ExtendedUploadDataType) => {
 }
 
 const confirmSelection = () => {
-  const selectedImages = images.value.filter((img) => img.selected).map((img) => ({ id: img.id }))
+  const selectedImages = images.value.filter((img) => img.selected)
   console.log("选中的图片:", selectedImages)
   emit("update:selectedImages", selectedImages) // 触发事件，发送选择的图片
 }
 
 // ...其他方法如 uploadNewAttachment, handleCoverImageUpload 等
+
+onMounted(() => {
+  getUploadData()
+})
 </script>
 
 <style scoped>
