@@ -81,6 +81,10 @@
       <el-button type="primary" @click="openImageLibrary">添加图片</el-button>
     </el-card>
   </div>
+
+  <el-dialog v-model="dialogUplaod" title="图片管理">
+    <UploadComponent :images="uploadedImages" @upload-images="handleUploadImages" />
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -88,6 +92,8 @@ import { getImageUrlApi, getProductApi } from "@/api/products/product"
 import { type GetProductData, Upload } from "@/api/products/product/types"
 import { onMounted, ref } from "vue"
 import { useRoute } from "vue-router"
+// import SearchMenu from "@/components/SearchMenu/index.vue"
+import UploadComponent from "@/components/Upload/index.vue"
 
 defineOptions({
   // 命名当前组件
@@ -106,6 +112,8 @@ const product = ref<GetProductDataMore>()
 const loading = ref<boolean>(false)
 const route = useRoute() // Vue Router's useRoute hook
 const uploadedImages = ref<ProductImage[]>([])
+
+const dialogUplaod = ref<boolean>(false)
 
 const getProductData = () => {
   const productId = route.query.id as string
@@ -139,6 +147,7 @@ const getImageUrl = (id: string): Promise<string> => {
 const openImageLibrary = () => {
   // 实现打开图片库的逻辑
   // 比如使用一个对话框组件来显示可选图片
+  dialogUplaod.value = true
 }
 
 // 移除图片的方法
