@@ -148,7 +148,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "产品分类",
         meta: {
           title: "产品分类",
-          keepAlive: true
+          keepAlive: false
         }
       },
       {
@@ -157,7 +157,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "产品",
         meta: {
           title: "产品",
-          keepAlive: true
+          keepAlive: false
         }
       },
       {
@@ -166,7 +166,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "产品查看",
         meta: {
           title: "产品查看",
-          keepAlive: true,
+          keepAlive: false,
           hidden: true
         }
       },
@@ -176,7 +176,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "产品编辑",
         meta: {
           title: "产品编辑",
-          keepAlive: true,
+          keepAlive: false,
           hidden: true
         }
       },

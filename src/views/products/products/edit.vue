@@ -225,6 +225,8 @@ import { ref, onMounted, watch } from "vue"
 import { useRoute } from "vue-router"
 import { usePagination } from "@/hooks/usePagination"
 import { GetCategoryData } from "@/api/products/category/types"
+import { ElMessage } from "element-plus"
+import router from "@/router"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 // import type { UploadFile } from "element-plus"
@@ -351,19 +353,26 @@ const submitForm = () => {
     updateProductDataApi(formData)
       .then(() => {
         // Handle success, maybe redirect to the viewing page
+        ElMessage.success(`修改产品成功!`)
+        router.push({ path: "/products/productview", query: { id: product.value?.id } })
       })
       .catch((error) => {
         // Handle error
         console.log(error)
+        ElMessage.error("修改产品失败!")
       })
   } else {
     createProductDataApi(formData)
-      .then(() => {
+      .then((res) => {
         // Handle success, maybe redirect to the viewing page
+        ElMessage.success(`新建产品成功!`)
+        const id = res.data.id
+        router.push({ path: "/products/productview", query: { id } })
       })
       .catch((error) => {
         // Handle error
         console.log(error)
+        ElMessage.error("新建产品失败!")
       })
   }
 }
