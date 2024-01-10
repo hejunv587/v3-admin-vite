@@ -26,24 +26,18 @@
       />
     </div>
     <el-button type="primary" @click="confirmSelection">确定选择</el-button>
-    <el-upload
-      class="avatar-uploader"
-      :action="uploadUrl"
-      :show-file-list="false"
-      :on-success="handleCoverImageUpload"
-      :before-upload="beforeAvatarUpload"
-    >
-      <el-button @click="uploadNewAttachment">上传新附件</el-button>
+    <el-upload class="avatar-uploader" :action="uploadUrl" :show-file-list="false" :on-success="handleCoverImageUpload">
+      <el-button>上传新附件</el-button>
     </el-upload>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref } from "vue"
+import { onMounted, ref, watch } from "vue"
 import { Upload } from "@/api/products/product/types"
 import { Check } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-import { defineEmits } from "vue"
+// import { defineEmits } from "vue"
 import { getImageUrlApi, getUploadAPi } from "@/api/products/product"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
@@ -56,6 +50,8 @@ const props = defineProps({
     default: () => [] // 提供一个默认值
   }
 })
+
+const uploadUrl = import.meta.env.VITE_BASE_API + "/upload/album1"
 
 // defineProps<{
 //   multiple: Boolean // 控制是单选还是多选
@@ -86,8 +82,8 @@ const getUploadData = async () => {
       // 创建一个处理每个元素的 Promise 数组
       const promises = res.data.list.map(async (element: Upload) => {
         const url = await getImageUrl(element.id)
-        const selected = false
-        return { ...element, url, selected }
+        const isSelected = props.selectedImages.some((selected) => selected.id === element.id)
+        return { ...element, url, selected: isSelected }
       })
 
       // 等待所有 Promise 完成
@@ -135,10 +131,19 @@ const confirmSelection = () => {
 }
 
 // ...其他方法如 uploadNewAttachment, handleCoverImageUpload 等
+const handleCoverImageUpload = async (response: any) => {
+  if (response.success && images.value) {
+    //重新加载附件列表
+    getUploadData()
+  }
+}
 
 onMounted(() => {
   getUploadData()
 })
+
+/** 监听分页参数的变化 */
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getUploadData, { immediate: true })
 </script>
 
 <style scoped>

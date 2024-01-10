@@ -70,7 +70,7 @@
         <div v-for="(image, index) in uploadedImages" :key="index" class="image-item">
           <img :src="image.url" class="uploaded-image" />
           <!-- <el-button type="danger" icon="el-icon-delete" class="remove-button" @click="removeImage(index)"> -->
-          <el-icon :size="20" class="remove-button" @click="removeImage(index)">
+          <el-icon :size="20" class="remove-button" @click="removeImage(image, index)">
             <Delete />
           </el-icon>
           <!-- </el-button> -->
@@ -88,12 +88,13 @@
 </template>
 
 <script lang="ts" setup>
-import { getImageUrlApi, getProductApi } from "@/api/products/product"
+import { addProductImagesApi, getImageUrlApi, getProductApi, removeProductImagesApi } from "@/api/products/product"
 import { type GetProductData, Upload } from "@/api/products/product/types"
 import { onMounted, ref } from "vue"
 import { useRoute } from "vue-router"
 // import SearchMenu from "@/components/SearchMenu/index.vue"
 import UploadComponent from "@/components/Upload/index.vue"
+import { ElMessage, ElMessageBox } from "element-plus"
 
 defineOptions({
   // 命名当前组件
@@ -151,22 +152,58 @@ const openImageLibrary = () => {
 }
 
 // 移除图片的方法
-const removeImage = (index: number) => {
-  uploadedImages.value.splice(index, 1)
+const removeImage = (image: ProductImage, index: number) => {
+  const productId = route.query.id as string
+  ElMessageBox.confirm(`正在移除产品图片：${image.name}，确认删除？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    removeProductImagesApi({ id: productId, image: { uploadId: image.id } }).then(() => {
+      ElMessage.success("删除成功")
+      uploadedImages.value.splice(index, 1)
+    })
+  })
 }
 
 onMounted(() => {
   getProductData()
 })
 
-const handleSelectedImages = (selectedImages) => {
+const addProductImages = (id: string, data: string[]) => {
+  addProductImagesApi({ id, imageIds: data })
+}
+
+const handleSelectedImages = async (selectedImages) => {
   console.log("父组件中接收到的:", selectedImages)
   // 处理从子组件传递过来的选中的图片
-  selectedImages.forEach((image) => {
-    uploadedImages.value.push(image)
-  })
+  // selectedImages.forEach((image) => {
+  //   uploadedImages.value.push(image)
+  // })
   // uploadedImages.value.push(selectedImages)
   console.log("uploadedImages:", uploadedImages.value)
+  // 从 selectedImages 中提取所有的 id
+  const imageIds = selectedImages.map((image) => image.id)
+
+  // 调用批量处理接口
+  try {
+    const productId = route.query.id as string /* 获取产品的 id */
+
+    // 添加新选择的图片到 uploadedImages，同时进行去重
+    selectedImages.forEach((selectedImage) => {
+      if (!uploadedImages.value.some((image) => image.id === selectedImage.id)) {
+        uploadedImages.value.push(selectedImage)
+      }
+    })
+
+    await addProductImages(productId, imageIds)
+    console.log("批量添加图片成功")
+
+    // 更新 uploadedImages 值
+    // uploadedImages.value.push(...selectedImages)
+  } catch (error) {
+    console.error("批量添加图片失败:", error)
+  }
 }
 </script>
 

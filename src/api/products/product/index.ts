@@ -60,3 +60,21 @@ export function getUploadAPi(params: Product.GetUploadRequestData) {
     params
   })
 }
+
+/** 添加产品图片 */
+export function addProductImagesApi(data: Product.AddProductImagesRequestData) {
+  return request({
+    url: `product/addimages/${data.id}`,
+    method: "patch",
+    data: data.imageIds
+  })
+}
+
+/** 移除产品图片 */
+export function removeProductImagesApi(data: Product.RemoveProductImagesRequestData) {
+  return request({
+    url: `product/removeimages/${data.id}`,
+    method: "patch",
+    data: data.image
+  })
+}

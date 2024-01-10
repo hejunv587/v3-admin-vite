@@ -63,6 +63,20 @@ export interface UpdateProductRequestData {
   cover?: Upload
 }
 
+//添加图片接口
+export interface AddProductImagesRequestData {
+  id: string
+  imageIds: string[]
+}
+
+//移除图片接口
+export interface RemoveProductImagesRequestData {
+  id: string
+  image: {
+    uploadId: string
+  }
+}
+
 export interface GetProductRequestData {
   /** 当前页码 */
   currentPage: number
