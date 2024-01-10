@@ -78,3 +78,21 @@ export function removeProductImagesApi(data: Product.RemoveProductImagesRequestD
     data: data.image
   })
 }
+
+/** 新增产品问答 */
+export function createProductQAApi(data: Product.QA) {
+  return request({
+    url: "product/qa",
+    method: "post",
+    data
+  })
+}
+
+/** 修改产品问答 */
+export function updateProductQAApi(data: Product.QA) {
+  return request({
+    url: `product/qa/${data.id}`,
+    method: "patch",
+    data
+  })
+}

@@ -19,9 +19,10 @@ export interface About {
 }
 
 export interface QA {
-  id: number
+  id?: number
   q: string
   a: string
+  productId?: string
   product?: GetProductData
 }
 

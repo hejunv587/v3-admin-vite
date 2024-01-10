@@ -80,21 +80,69 @@
       <!-- 打开图片库的按钮 -->
       <el-button type="primary" @click="openImageLibrary">添加图片</el-button>
     </el-card>
+
+    <!-- 产品问答 -->
+    <el-card v-if="product">
+      <div class="table-wrapper">
+        <el-table :data="product.qas">
+          <!-- <el-table-column type="selection" width="50" align="center" /> -->
+          <el-table-column prop="id" label="问答ID" align="center" />
+          <el-table-column prop="q" label="问题" align="center" />
+          <el-table-column prop="a" label="回答" align="center" />
+          <el-table-column fixed="right" label="操作" width="150" align="center">
+            <template #default="scope">
+              <el-button type="primary" text bg size="small" @click="handleQAUpdate(scope.row)">修改</el-button>
+              <el-button type="danger" text bg size="small" @click="handleQADelete(scope.row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <!-- 新增Q&A -->
+      <el-button type="primary" @click="openQADiag">新增Q&A</el-button>
+    </el-card>
   </div>
 
   <el-dialog v-model="dialogUplaod" title="图片管理">
     <UploadComponent :selectedImages="uploadedImages" :multiple="true" @update:selectedImages="handleSelectedImages" />
   </el-dialog>
+
+  <!-- 新增/修改问答 -->
+  <el-dialog
+    v-model="dialogQAVisible"
+    :title="currentUpdateId === undefined ? '新增问答' : '修改问答'"
+    @close="resetForm"
+    width="60%"
+  >
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="50px" label-position="left">
+      <el-form-item prop="q" label="问题">
+        <el-input v-model="formData.q" placeholder="请输入问题" />
+      </el-form-item>
+      <el-form-item prop="a" label="答案">
+        <el-input v-model="formData.a" placeholder="请输入答案" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="dialogQAVisible = false">取消</el-button>
+      <el-button type="primary" @click="handleCreate">确认</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
-import { addProductImagesApi, getImageUrlApi, getProductApi, removeProductImagesApi } from "@/api/products/product"
-import { type GetProductData, Upload } from "@/api/products/product/types"
-import { onMounted, ref } from "vue"
+import {
+  addProductImagesApi,
+  createProductQAApi,
+  getImageUrlApi,
+  getProductApi,
+  removeProductImagesApi,
+  updateProductQAApi
+} from "@/api/products/product"
+import { type GetProductData, Upload, QA } from "@/api/products/product/types"
+import { onMounted, reactive, ref } from "vue"
 import { useRoute } from "vue-router"
 // import SearchMenu from "@/components/SearchMenu/index.vue"
 import UploadComponent from "@/components/Upload/index.vue"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { ElMessage, ElMessageBox, FormInstance, FormRules } from "element-plus"
 
 defineOptions({
   // 命名当前组件
@@ -175,13 +223,13 @@ const addProductImages = (id: string, data: string[]) => {
 }
 
 const handleSelectedImages = async (selectedImages) => {
-  console.log("父组件中接收到的:", selectedImages)
+  // console.log("父组件中接收到的:", selectedImages)
   // 处理从子组件传递过来的选中的图片
   // selectedImages.forEach((image) => {
   //   uploadedImages.value.push(image)
   // })
   // uploadedImages.value.push(selectedImages)
-  console.log("uploadedImages:", uploadedImages.value)
+  // console.log("uploadedImages:", uploadedImages.value)
   // 从 selectedImages 中提取所有的 id
   const imageIds = selectedImages.map((image) => image.id)
 
@@ -197,14 +245,84 @@ const handleSelectedImages = async (selectedImages) => {
     })
 
     await addProductImages(productId, imageIds)
-    console.log("批量添加图片成功")
+    // console.log("批量添加图片成功")
+    ElMessage.success("量添加图片成功")
 
     // 更新 uploadedImages 值
     // uploadedImages.value.push(...selectedImages)
   } catch (error) {
-    console.error("批量添加图片失败:", error)
+    // console.error("批量添加图片失败:", error)
+    ElMessage.success("批量添加图片失败:")
   }
+
+  dialogUplaod.value = false
 }
+
+//#region 增
+const dialogQAVisible = ref<boolean>(false)
+const openQADiag = () => {
+  dialogQAVisible.value = true
+}
+const formRef = ref<FormInstance | null>(null)
+const formData = reactive({
+  q: "",
+  a: "",
+  productId: ""
+})
+const formRules: FormRules = reactive({
+  q: [{ required: true, trigger: "blur", message: "请输入问题" }],
+  a: [{ required: true, trigger: "blur", message: "请输入答案" }]
+})
+const handleCreate = () => {
+  const productId = route.query.id as string
+  formRef.value?.validate((valid: boolean, fields) => {
+    if (valid) {
+      if (currentUpdateId.value === undefined) {
+        formData.productId = productId
+        createProductQAApi(formData)
+          .then(() => {
+            ElMessage.success("新增成功")
+            getProductData()
+          })
+          .finally(() => {
+            dialogQAVisible.value = false
+          })
+      } else {
+        updateProductQAApi({
+          id: currentUpdateId.value,
+          q: formData.q,
+          a: formData.a,
+          productId: productId
+        })
+          .then(() => {
+            ElMessage.success("修改成功")
+            getProductData()
+          })
+          .finally(() => {
+            dialogQAVisible.value = false
+          })
+      }
+    } else {
+      console.error("表单校验不通过", fields)
+    }
+  })
+}
+const resetForm = () => {
+  currentUpdateId.value = undefined
+  formData.q = ""
+  formData.a = ""
+}
+//#endregion
+//#region 改
+const currentUpdateId = ref<undefined | number>(undefined)
+const handleQAUpdate = (row: QA) => {
+  currentUpdateId.value = row.id
+  formData.q = row.q
+  formData.a = row.a
+  formData.productId = row.productId ? "" : (row.productId as string)
+  dialogQAVisible.value = true
+}
+//#endregion
 </script>
 
 <style lang="scss" scoped>
