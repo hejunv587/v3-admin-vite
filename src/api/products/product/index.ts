@@ -27,7 +27,7 @@ export function updateProductDataApi(data: Product.UpdateProductRequestData) {
   })
 }
 
-/** 查 */
+/** 翻页查询产品 */
 export function getProductDataApi(params: Product.GetProductRequestData) {
   return request<Product.GetProductResponseData>({
     url: "product/pagequery",
@@ -36,10 +36,18 @@ export function getProductDataApi(params: Product.GetProductRequestData) {
   })
 }
 
-/** 单条记录查 */
+/** 单条记录查询产品 */
 export function getProductApi(data: string) {
   return request<Product.GetOneProductResData>({
     url: `product/${data}`,
+    method: "get"
+  })
+}
+
+/** 查询所有产品,返回id,name,model,作为review关联选项 */
+export function getAllProductApi() {
+  return request<Product.GetAllProductResData>({
+    url: "product",
     method: "get"
   })
 }
@@ -94,5 +102,39 @@ export function updateProductQAApi(data: Product.QA) {
     url: `product/qa/${data.id}`,
     method: "patch",
     data
+  })
+}
+
+/** 删除产品问答 */
+export function removeProductQAApi(id: string) {
+  return request({
+    url: `product/qa/${id}`,
+    method: "delete"
+  })
+}
+
+/** 新增产品相关 */
+export function createAboutApi(data: Product.About) {
+  return request({
+    url: "product/about",
+    method: "post",
+    data
+  })
+}
+
+/** 修改产品相关 */
+export function updateAboutApi(data: Product.About) {
+  return request({
+    url: `product/about/${data.id}`,
+    method: "patch",
+    data
+  })
+}
+
+/** 删除产品相关 */
+export function removeAboutApi(id: string) {
+  return request({
+    url: `product/about/${id}`,
+    method: "delete"
   })
 }

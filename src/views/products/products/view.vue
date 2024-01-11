@@ -100,6 +100,25 @@
       <!-- 新增Q&A -->
       <el-button type="primary" @click="openQADiag">新增Q&A</el-button>
     </el-card>
+
+    <!-- 产品相关 -->
+    <el-card v-if="product">
+      <div class="table-wrapper">
+        <el-table :data="product.about">
+          <el-table-column prop="id" label="相关ID" align="center" />
+          <el-table-column prop="name" label="相关标题" align="center" />
+          <el-table-column prop="desc" label="相关说明" align="center" />
+          <el-table-column fixed="right" label="操作" width="150" align="center">
+            <template #default="scope">
+              <el-button type="primary" text bg size="small" @click="handleAboutUpdate(scope.row)">修改</el-button>
+              <el-button type="danger" text bg size="small" @click="handleAboutDelete(scope.row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <!-- 新增相关说明 -->
+      <el-button type="primary" @click="openAboutDiag">新增相关说明</el-button>
+    </el-card>
   </div>
 
   <el-dialog v-model="dialogUplaod" title="图片管理">
@@ -126,18 +145,43 @@
       <el-button type="primary" @click="handleCreate">确认</el-button>
     </template>
   </el-dialog>
+
+  <!-- 新增/修改相关 -->
+  <el-dialog
+    v-model="dialogAboutVisible"
+    :title="currentUpdateId === undefined ? '新增相关' : '修改相关'"
+    @close="resetAboutForm"
+    width="60%"
+  >
+    <el-form ref="aboutFormRef" :model="aboutFormData" :rules="aboutFormRules" label-width="50px" label-position="left">
+      <el-form-item prop="name" label="标题">
+        <el-input v-model="aboutFormData.name" placeholder="请输入标题" />
+      </el-form-item>
+      <el-form-item prop="desc" label="描述">
+        <el-input v-model="aboutFormData.desc" placeholder="请输入描述" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="dialogAboutVisible = false">取消</el-button>
+      <el-button type="primary" @click="handleAboutCreate">确认</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
 import {
   addProductImagesApi,
+  createAboutApi,
   createProductQAApi,
   getImageUrlApi,
   getProductApi,
+  removeAboutApi,
   removeProductImagesApi,
+  removeProductQAApi,
+  updateAboutApi,
   updateProductQAApi
 } from "@/api/products/product"
-import { type GetProductData, Upload, QA } from "@/api/products/product/types"
+import { type GetProductData, Upload, QA, About } from "@/api/products/product/types"
 import { onMounted, reactive, ref } from "vue"
 import { useRoute } from "vue-router"
 // import SearchMenu from "@/components/SearchMenu/index.vue"
@@ -258,6 +302,8 @@ const handleSelectedImages = async (selectedImages) => {
   dialogUplaod.value = false
 }
 
+const currentUpdateId = ref<undefined | number>(undefined)
+
 //#region 增
 const dialogQAVisible = ref<boolean>(false)
 const openQADiag = () => {
@@ -314,13 +360,107 @@ const resetForm = () => {
 }
 //#endregion
 //#region 改
-const currentUpdateId = ref<undefined | number>(undefined)
 const handleQAUpdate = (row: QA) => {
   currentUpdateId.value = row.id
   formData.q = row.q
   formData.a = row.a
   formData.productId = row.productId ? "" : (row.productId as string)
   dialogQAVisible.value = true
+}
+//#endregion
+
+//#region 删
+const handleQADelete = (row: QA) => {
+  ElMessageBox.confirm(`正在移除产品问答，确认删除？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    removeProductQAApi(row.id).then(() => {
+      ElMessage.success("删除问答成功")
+      getProductData()
+    })
+  })
+}
+//#endregion
+
+//#region 新增相关
+const dialogAboutVisible = ref<boolean>(false)
+const openAboutDiag = () => {
+  dialogAboutVisible.value = true
+}
+const aboutFormRef = ref<FormInstance | null>(null)
+const aboutFormData = reactive({
+  name: "",
+  desc: "",
+  productId: ""
+})
+const aboutFormRules: FormRules = reactive({
+  name: [{ required: true, trigger: "blur", message: "请输入相关的标题" }],
+  desc: [{ required: true, trigger: "blur", message: "请输入相关的描述" }]
+})
+const handleAboutCreate = () => {
+  const productId = route.query.id as string
+  aboutFormRef.value?.validate((valid: boolean, fields) => {
+    if (valid) {
+      if (currentUpdateId.value === undefined) {
+        aboutFormData.productId = productId
+        createAboutApi(aboutFormData)
+          .then(() => {
+            ElMessage.success("新增成功")
+            getProductData()
+          })
+          .finally(() => {
+            dialogAboutVisible.value = false
+          })
+      } else {
+        updateAboutApi({
+          id: currentUpdateId.value,
+          name: aboutFormData.name,
+          desc: aboutFormData.desc,
+          productId: productId
+        })
+          .then(() => {
+            ElMessage.success("修改成功")
+            getProductData()
+          })
+          .finally(() => {
+            dialogAboutVisible.value = false
+          })
+      }
+    } else {
+      console.error("表单校验不通过", fields)
+    }
+  })
+}
+const resetAboutForm = () => {
+  currentUpdateId.value = undefined
+  aboutFormData.name = ""
+  aboutFormData.desc = ""
+}
+//#endregion
+//#region 相关修改
+const handleAboutUpdate = (row: About) => {
+  currentUpdateId.value = row.id
+  aboutFormData.name = row.name
+  aboutFormData.desc = row.desc
+  aboutFormData.productId = row.productId ? "" : (row.productId as string)
+  dialogAboutVisible.value = true
+}
+//#endregion
+
+//#region 相关删除
+const handleAboutDelete = (row: About) => {
+  ElMessageBox.confirm(`正在移除产品相关，确认删除？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    removeAboutApi(row.id).then(() => {
+      ElMessage.success("删除问答成功")
+      getProductData()
+    })
+  })
 }
 //#endregion
 </script>

@@ -12,9 +12,10 @@ export interface Upload {
 }
 
 export interface About {
-  id: number
+  id?: number
   name: string
   desc: string
+  productId?: string
   product?: GetProductData
 }
 
@@ -99,20 +100,20 @@ export interface GetUploadRequestData {
 export interface GetProductData {
   id: number
   model: string
-  serie: GetCategoryData | null
+  serie?: GetCategoryData | null
   name: string
-  cover: Upload
-  images: Upload[]
-  description: string
-  overview: string
-  functions: string
-  advantages: string
-  technical_parameters: string
-  about: About[]
-  services: string
-  whychoose: string
-  note: string
-  qas: QA[]
+  cover?: Upload
+  images?: Upload[]
+  description?: string
+  overview?: string
+  functions?: string
+  advantages?: string
+  technical_parameters?: string
+  about?: About[]
+  services?: string
+  whychoose?: string
+  note?: string
+  qas?: QA[]
 }
 
 export type GetProductResponseData = ApiResponseData<{
@@ -121,6 +122,8 @@ export type GetProductResponseData = ApiResponseData<{
 }>
 
 export type GetOneProductResData = ApiResponseData<GetProductData>
+
+export type GetAllProductResData = ApiResponseData<GetProductData[]>
 
 export type GetUtlResData = ApiResponseData<string>
 
