@@ -12,6 +12,7 @@ import { ElMessage, FormRules, type FormInstance } from "element-plus"
 import { usePagination } from "@/hooks/usePagination"
 import router from "@/router"
 import { type ReviewData } from "@/api/products/review/types"
+import { createReviewApi, getReviewApi, updateReviewApi } from "@/api/products/review"
 
 defineOptions({
   // 命名当前组件
@@ -33,35 +34,45 @@ onMounted(() => {
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = reactive({
-  productId: "",
+  productId: 0,
   username: "",
-  score: "",
-  comments: "",
+  score: 0,
+  content: "",
   images: []
 })
 const formRules: FormRules = reactive({
   productId: [{ required: true, trigger: "blur", message: "请选择评价产品" }],
   username: [{ required: true, trigger: "blur", message: "请输入评价用户名" }],
-  score: [{ required: true, trigger: "blur", message: "请输入评价分数" }],
-  comments: [{ required: true, trigger: "blur", message: "请输入评价内容" }]
+  // score: [{ required: true, trigger: "blur", message: "请输入评价分数" }],
+  score: [
+    {
+      required: true,
+      trigger: "blur",
+      message: "请输入评价分数",
+      validator: (value: number) => {
+        if (value < 0 || value > 5) {
+          return "评分必须在 0 到 5 之间"
+        }
+        return true
+      }
+    }
+  ],
+  content: [{ required: true, trigger: "blur", message: "请输入评价内容" }]
 })
 const handleCreate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
       if (currentUpdateId.value === undefined) {
-        // createRevieApi(formData)
-        //   .then(() => {
-        //     ElMessage.success("新增成功")
-        //     getReviewData()
-        //   })
-        //   .finally(() => {
-        //     dialogVisible.value = false
-        //   })
+        createReviewApi(formData)
+          .then(() => {
+            ElMessage.success("新增成功")
+            getReviewData()
+          })
+          .finally(() => {
+            dialogVisible.value = false
+          })
       } else {
-        updateReviewApi({
-          id: currentUpdateId.value,
-          name: formData.name
-        })
+        updateReviewApi(+currentUpdateId.value, formData)
           .then(() => {
             ElMessage.success("修改成功")
             getReviewData()
@@ -77,7 +88,11 @@ const handleCreate = () => {
 }
 const resetForm = () => {
   currentUpdateId.value = undefined
-  formData.name = ""
+  formData.productId = 0
+  formData.username = ""
+  formData.score = 0
+  formData.content = ""
+  formData.images = []
 }
 //#endregion
 
@@ -123,30 +138,28 @@ const handleView = (row: GetProductData) => {
 const reviewData = ref<ReviewData[]>([])
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
-  id: "",
-  model: "",
-  name: ""
+  productId: ""
 })
-const getProductData = () => {
+const getReviewData = () => {
   loading.value = true
   getReviewApi({
     currentPage: paginationData.currentPage,
     size: paginationData.pageSize,
-    name: searchData.id || undefined
+    productId: searchData.productId
   })
     .then((res) => {
       paginationData.total = res.data.total
-      productData.value = res.data.list
+      reviewData.value = res.data.list
     })
     .catch(() => {
-      productData.value = []
+      reviewData.value = []
     })
     .finally(() => {
       loading.value = false
     })
 }
 const handleSearch = () => {
-  paginationData.currentPage === 1 ? getProductData() : (paginationData.currentPage = 1)
+  paginationData.currentPage === 1 ? getReviewData() : (paginationData.currentPage = 1)
 }
 const resetSearch = () => {
   searchFormRef.value?.resetFields()
@@ -162,9 +175,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getProd
   <div class="app-container">
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
-        <el-form-item prop="name" label="产品编码">
-          <el-input v-model="searchData.model" placeholder="请输入" />
-        </el-form-item>
+        <el-select v-model="searchData.productId" placeholder="请选择产品" value-key="name">
+          <el-option v-for="product in products" :key="product.id" :label="product.model" :value="product.id" />
+        </el-select>
         <!-- <el-form-item prop="name" label="产品名称">
           <el-input v-model="searchData.name" placeholder="请输入" />
         </el-form-item> -->
@@ -196,7 +209,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getProd
           <el-table-column prop="product.model" label="产品编码" align="center" />
           <el-table-column prop="username" label="用户名称" align="center" />
           <el-table-column prop="score" label="评分" align="center" />
-          <el-table-column prop="comments" label="评论内容" align="center" />
+          <el-table-column prop="content" label="评论内容" align="center" />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleView(scope.row)">查看</el-button>
@@ -229,12 +242,18 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getProd
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
         <el-form-item prop="username" label="分类">
-          <el-select v-model="reviewData.product" placeholder="请选择产品" value-key="name">
-            <el-option v-for="product in products" :key="product.id" :label="product.model" :value="product" />
+          <el-select v-model="formData.productId" placeholder="请选择产品" value-key="name">
+            <el-option v-for="product in products" :key="product.id" :label="product.model" :value="product.id" />
           </el-select>
         </el-form-item>
-        <el-form-item prop="name" label="分类">
-          <el-input v-model="formData.name" placeholder="请输入" />
+        <el-form-item prop="username" label="用户名称">
+          <el-input v-model="formData.username" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="score" label="评分">
+          <el-input v-model="formData.score" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="content" label="评论">
+          <el-input v-model="formData.content" placeholder="请输入" />
         </el-form-item>
       </el-form>
       <template #footer>
