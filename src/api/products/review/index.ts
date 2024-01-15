@@ -35,3 +35,11 @@ export function updateReviewApi(id: number, data: Review.CreateReviewRequest) {
     data
   })
 }
+
+/** 删 */
+export function deleteReviewApi(id: number) {
+  return request({
+    url: `review/${id}`,
+    method: "delete"
+  })
+}

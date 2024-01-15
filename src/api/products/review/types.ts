@@ -2,7 +2,7 @@ import { GetProductData, Upload } from "../product/types"
 
 export interface ReviewData {
   id?: number
-  productId?: string
+  productId?: number
   product?: GetProductData
   username?: string
   score: number

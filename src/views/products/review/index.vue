@@ -4,15 +4,16 @@ import {
   // createProductDataApi,
   // deleteProductDataApi,
   // updateProductDataApi,
-  getAllProductApi
+  getAllProductApi,
+  getImageUrlApi
 } from "@/api/products/product/index"
 import { type GetProductData } from "@/api/products/product/types"
-import { ElMessage, FormRules, type FormInstance } from "element-plus"
-// import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
+import { ElMessage, FormRules, type FormInstance, ElMessageBox } from "element-plus"
+import { Search, Refresh, CirclePlus, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-import router from "@/router"
+// import router from "@/router"
 import { type ReviewData } from "@/api/products/review/types"
-import { createReviewApi, getReviewApi, updateReviewApi } from "@/api/products/review"
+import { createReviewApi, deleteReviewApi, getReviewApi, updateReviewApi } from "@/api/products/review"
 
 defineOptions({
   // 命名当前组件
@@ -34,26 +35,30 @@ onMounted(() => {
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = reactive({
-  productId: 0,
+  productId: undefined,
   username: "",
-  score: 0,
+  score: undefined,
   content: "",
   images: []
 })
 const formRules: FormRules = reactive({
   productId: [{ required: true, trigger: "blur", message: "请选择评价产品" }],
   username: [{ required: true, trigger: "blur", message: "请输入评价用户名" }],
-  // score: [{ required: true, trigger: "blur", message: "请输入评价分数" }],
   score: [
     {
       required: true,
       trigger: "blur",
-      message: "请输入评价分数",
-      validator: (value: number) => {
-        if (value < 0 || value > 5) {
-          return "评分必须在 0 到 5 之间"
+      // message: "请输入评价分数,评分必须在 0 到 5 之间",
+      validator: (rule: any, value: any, callback: any) => {
+        const numericValue = Number(value) // 将字符串转换为数字
+        if (isNaN(numericValue)) {
+          // 检查转换结果是否为数字
+          callback(new Error("请输入评分"))
+        } else if (numericValue < 0 || numericValue > 5) {
+          callback(new Error("评分必须在 0 到 5 之间"))
+        } else {
+          callback()
         }
-        return true
       }
     }
   ],
@@ -88,51 +93,41 @@ const handleCreate = () => {
 }
 const resetForm = () => {
   currentUpdateId.value = undefined
-  formData.productId = 0
+  formData.productId = undefined
   formData.username = ""
-  formData.score = 0
+  formData.score = undefined
   formData.content = ""
   formData.images = []
 }
 //#endregion
 
 //#region 删
-// const handleDelete = (row: GetProductData) => {
-//   ElMessageBox.confirm(`正在删除产品分类：${row.name}，确认删除？`, "提示", {
-//     confirmButtonText: "确定",
-//     cancelButtonText: "取消",
-//     type: "warning"
-//   }).then(() => {
-//     deleteProductDataApi(row.id).then(() => {
-//       ElMessage.success("删除成功")
-//       getProductData()
-//     })
-//   })
-// }
+const handleDelete = (row: ReviewData) => {
+  ElMessageBox.confirm(`正在删除产品评价：${row.id}，确认删除？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteReviewApi(row.id).then(() => {
+      ElMessage.success("删除成功")
+      getReviewData()
+    })
+  })
+}
 //#endregion
 
 //#region 改
-const currentUpdateId = ref<undefined | string>(undefined)
-const handleUpdate = (row: GetProductData) => {
-  router.push({ path: "/products/productedit", query: { id: row.id } })
-  //   currentUpdateId.value = row.id
-  //   formData.name = row.name
-  //   dialogVisible.value = true
+const currentUpdateId = ref<undefined | number>(undefined)
+const handleUpdate = (row: ReviewData) => {
+  currentUpdateId.value = row.id as number
+  formData.productId = row.productId
+  formData.username = row.username as string
+  formData.score = row.score
+  formData.content = row.content as string
+  formData.images = row.images
+  dialogVisible.value = true
 }
 //#endregion
-
-const handleView = (row: GetProductData) => {
-  router.push({ path: "/products/productview", query: { id: row.id } })
-  // {
-  //   path: "category",
-  //     component: () => import("@/views/products/category/index.vue"),
-  //       name: "产品分类",
-  //         meta: {
-  //     title: "产品分类",
-  //       keepAlive: true
-  //   }
-  // },
-}
 
 //#region 查
 const reviewData = ref<ReviewData[]>([])
@@ -147,9 +142,20 @@ const getReviewData = () => {
     size: paginationData.pageSize,
     productId: searchData.productId
   })
-    .then((res) => {
+    .then(async (res) => {
       paginationData.total = res.data.total
       reviewData.value = res.data.list
+      for (const review of reviewData.value) {
+        review.productId = review.product?.id as number
+        console.log("reviewData", review)
+        // 调用异步函数获取URL
+        if (review.images?.length > 0) {
+          for (const image of review.images) {
+            console.log("image", image)
+            image.url = await getImageUrl(image.id)
+          }
+        }
+      }
     })
     .catch(() => {
       reviewData.value = []
@@ -162,26 +168,35 @@ const handleSearch = () => {
   paginationData.currentPage === 1 ? getReviewData() : (paginationData.currentPage = 1)
 }
 const resetSearch = () => {
-  searchFormRef.value?.resetFields()
+  // searchFormRef.value?.resetFields()
+  searchData.productId = ""
   handleSearch()
 }
 //#endregion
 
+const getImageUrl = (id: string): Promise<string> => {
+  return getImageUrlApi(id).then((res) => {
+    const url = res.data
+    return url
+  })
+}
+
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], getProductData, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getReviewData, { immediate: true })
 </script>
 
 <template>
   <div class="app-container">
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
-        <el-select v-model="searchData.productId" placeholder="请选择产品" value-key="name">
-          <el-option v-for="product in products" :key="product.id" :label="product.model" :value="product.id" />
-        </el-select>
-        <!-- <el-form-item prop="name" label="产品名称">
+        <el-form-item>
+          <el-select v-model="searchData.productId" placeholder="请选择产品" value-key="name">
+            <el-option v-for="product in products" :key="product.id" :label="product.model" :value="product.id" />
+          </el-select>
+          <!-- <el-form-item prop="name" label="产品名称">
           <el-input v-model="searchData.name" placeholder="请输入" />
         </el-form-item> -->
-        <el-form-item>
+
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
           <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
         </el-form-item>
@@ -198,7 +213,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getProd
             <el-button type="primary" :icon="Download" circle />
           </el-tooltip>
           <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="getProductData" />
+            <el-button type="primary" :icon="RefreshRight" circle @click="getReviewData" />
           </el-tooltip>
         </div>
       </div>
@@ -210,9 +225,17 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getProd
           <el-table-column prop="username" label="用户名称" align="center" />
           <el-table-column prop="score" label="评分" align="center" />
           <el-table-column prop="content" label="评论内容" align="center" />
+          <el-table-column prop="images" label="评论图片" align="center">
+            <template #default="scope">
+              <el-carousel :interval="4000" arrow="always">
+                <el-carousel-item v-for="image in scope.row.images" :key="image.id">
+                  <img :src="image.url" alt="图片" />
+                </el-carousel-item>
+              </el-carousel>
+            </template>
+          </el-table-column>
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleView(scope.row)">查看</el-button>
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
@@ -254,6 +277,20 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getProd
         </el-form-item>
         <el-form-item prop="content" label="评论">
           <el-input v-model="formData.content" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item label="图片">
+          <div v-for="(image, index) in formData.images" :key="image.id" class="image-item">
+            <img :src="image.url" alt="图片" />
+            <el-button icon="el-icon-delete" @click="removeImage(index)">删除</el-button>
+          </div>
+          <el-upload
+            action="your-upload-url"
+            list-type="picture-card"
+            :on-success="handleUploadSuccess"
+            :before-upload="beforeUpload"
+          >
+            <i class="el-icon-plus" />
+          </el-upload>
         </el-form-item>
       </el-form>
       <template #footer>
