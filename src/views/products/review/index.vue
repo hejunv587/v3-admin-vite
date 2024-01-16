@@ -7,23 +7,32 @@ import {
   getAllProductApi,
   getImageUrlApi
 } from "@/api/products/product/index"
-import { type GetProductData } from "@/api/products/product/types"
+import { Upload, type GetProductData } from "@/api/products/product/types"
 import { ElMessage, FormRules, type FormInstance, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 // import router from "@/router"
 import { type ReviewData } from "@/api/products/review/types"
 import { createReviewApi, deleteReviewApi, getReviewApi, updateReviewApi } from "@/api/products/review"
+import UploadComponent from "@/components/Upload/index.vue"
 
 defineOptions({
   // 命名当前组件
   name: "产品评价"
 })
 
+type ProductImage = Upload & {
+  url: string
+}
+
 const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 const products = ref<GetProductData[]>([])
+
+const dialogUplaod = ref<boolean>(false)
+
+// const uploadedImages = ref<ProductImage[]>([])
 
 onMounted(() => {
   getAllProductApi().then((res) => {
@@ -64,6 +73,12 @@ const formRules: FormRules = reactive({
   ],
   content: [{ required: true, trigger: "blur", message: "请输入评价内容" }]
 })
+
+const handleCancle = () => {
+  dialogVisible.value = false
+  resetForm()
+}
+
 const handleCreate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
@@ -75,6 +90,7 @@ const handleCreate = () => {
           })
           .finally(() => {
             dialogVisible.value = false
+            resetForm()
           })
       } else {
         updateReviewApi(+currentUpdateId.value, formData)
@@ -84,6 +100,7 @@ const handleCreate = () => {
           })
           .finally(() => {
             dialogVisible.value = false
+            resetForm()
           })
       }
     } else {
@@ -179,6 +196,57 @@ const getImageUrl = (id: string): Promise<string> => {
     const url = res.data
     return url
   })
+}
+
+// 打开图片库的方法
+const openImageLibrary = () => {
+  // 实现打开图片库的逻辑
+  // 比如使用一个对话框组件来显示可选图片
+  dialogUplaod.value = true
+}
+
+// 移除图片的方法
+const removeImage = (image: ProductImage) => {
+  // const productId = route.query.id as string
+  ElMessageBox.confirm(`正在移除产品图片：${image.name}，确认删除？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    // removeProductImagesApi({ id: productId, image: { uploadId: image.id } }).then(() => {
+    ElMessage.success("删除成功")
+    formData.images = formData.images.filter((item) => item !== image)
+    // })
+  })
+}
+
+const handleSelectedImages = async (selectedImages) => {
+  // const imageIds = selectedImages.map((image) => image.id)
+
+  // 调用批量处理接口
+  // try {
+  // const productId = route.query.id as string /* 获取产品的 id */
+
+  // 添加新选择的图片到 uploadedImages，同时进行去重
+  selectedImages.forEach(async (selectedImage) => {
+    if (!formData.images.some((image) => image.id === selectedImage.id)) {
+      selectedImage.url = await getImageUrl(selectedImage.id)
+      formData.images.push(selectedImage)
+    }
+  })
+
+  // await addProductImages(productId, imageIds)
+  // console.log("批量添加图片成功")
+  // ElMessage.success("量添加图片成功")
+
+  // 更新 uploadedImages 值
+  // uploadedImages.value.push(...selectedImages)
+  // } catch (error) {
+  // console.error("批量添加图片失败:", error)
+  // ElMessage.success("批量添加图片失败:")
+  // }
+
+  dialogUplaod.value = false
 }
 
 /** 监听分页参数的变化 */
@@ -279,24 +347,33 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRevi
           <el-input v-model="formData.content" placeholder="请输入" />
         </el-form-item>
         <el-form-item label="图片">
-          <div v-for="(image, index) in formData.images" :key="image.id" class="image-item">
-            <img :src="image.url" alt="图片" />
-            <el-button icon="el-icon-delete" @click="removeImage(index)">删除</el-button>
+          <div class="images-container">
+            <div v-for="(image, index) in formData.images" :key="index" class="image-item">
+              <img :src="image.url" class="uploaded-image" />
+              <!-- <el-button type="danger" icon="el-icon-delete" class="remove-button" @click="removeImage(index)"> -->
+              <el-icon :size="20" class="remove-button" @click="removeImage(image)">
+                <Delete />
+              </el-icon>
+              <!-- </el-button> -->
+            </div>
           </div>
-          <el-upload
-            action="your-upload-url"
-            list-type="picture-card"
-            :on-success="handleUploadSuccess"
-            :before-upload="beforeUpload"
-          >
-            <i class="el-icon-plus" />
-          </el-upload>
+          <!-- 打开图片库的按钮 -->
+          <el-button type="primary" @click="openImageLibrary">添加图片</el-button>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="handleCancle">取消</el-button>
         <el-button type="primary" @click="handleCreate">确认</el-button>
       </template>
+    </el-dialog>
+
+    <el-dialog v-model="dialogUplaod" title="图片管理">
+      <UploadComponent
+        :key="currentUpdateId || 0"
+        :selectedImages="formData.images"
+        :multiple="true"
+        @update:selectedImages="handleSelectedImages"
+      />
     </el-dialog>
   </div>
 </template>
@@ -323,5 +400,38 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRevi
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+
+.images-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.image-item {
+  margin: 10px;
+  position: relative;
+}
+
+.uploaded-image {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+}
+
+.remove-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  color: red; /* 设置图标颜色为红色 */
+  cursor: pointer;
+  background-color: white; /* 背景色 */
+  border-radius: 50%; /* 圆形背景 */
+  padding: 5px; /* 内边距 */
+}
+
+/* 悬浮在删除图标上时的样式 */
+.remove-button:hover {
+  color: darkred; /* 悬浮时颜色变深 */
+  background-color: #f5f5f5; /* 悬浮时背景颜色变化 */
 }
 </style>
