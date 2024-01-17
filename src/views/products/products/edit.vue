@@ -12,8 +12,11 @@
 
         <el-form-item label="系列">
           <!-- <el-input v-model="product.serie" /> -->
-          <el-select v-model="product.serie" placeholder="请选择系列" value-key="name">
+          <!-- <el-select v-model="product.serie" placeholder="请选择系列" value-key="name">
             <el-option v-for="serie in series" :key="serie.id" :label="serie.name" :value="serie" />
+          </el-select> -->
+          <el-select v-model="selectedSerieId" placeholder="请选择系列" @change="updateSerie">
+            <el-option v-for="serie in series" :key="serie.id" :label="serie.name" :value="serie.id" />
           </el-select>
         </el-form-item>
 
@@ -203,7 +206,6 @@
         :action="uploadUrl"
         :show-file-list="false"
         :on-success="handleCoverImageUpload"
-        :before-upload="beforeAvatarUpload"
       >
         <el-button @click="uploadNewAttachment">上传新附件</el-button>
       </el-upload>
@@ -269,7 +271,11 @@ const getProductData = () => {
       .then(async (res) => {
         product.value = res.data as GetProductDataMore
         setFormValues() // Populate form fields
-        product.value.coverImageUrl = (await getImageUrl(product.value.cover.id)) || ""
+        if (product.value.cover?.id) {
+          product.value.coverImageUrl = await getImageUrl(product.value.cover.id)
+        } else {
+          product.value.coverImageUrl = ""
+        }
       })
       .catch()
       .finally(() => {
@@ -280,8 +286,26 @@ const getProductData = () => {
   }
 }
 
+const selectedSerieId = ref(product.value?.serie?.id || undefined)
+
+const updateSerie = (newSerieId: string) => {
+  const selectedSerie = series.value.find((serie) => serie.id === newSerieId)
+  if (product.value) {
+    product.value.serie = selectedSerie || null
+  }
+}
+
+// 确保当 product 对象更新时，同步更新 selectedSerieId
+watch(
+  () => product.value?.serie,
+  (newSerie) => {
+    selectedSerieId.value = newSerie?.id || undefined
+  }
+)
+
 const initFormValues = () => {
   product.value = {
+    id: 0,
     model: "",
     serie: {
       id: "",
@@ -292,19 +316,20 @@ const initFormValues = () => {
     // functions: "",
     // advantages: "",
     // technical_parameters: "",
-    name: ""
+    name: "",
     // services: "",
     // whychoose: "",
     // note: ""
+    coverImageUrl: ""
   }
 }
 const setFormValues = () => {
-  functions.value = product.value?.functions.split(",") || []
-  technical_parameters.value = product.value?.technical_parameters.split(",") || []
-  advantages.value = product.value?.advantages.split(",") || []
-  services.value = product.value?.services.split(",") || []
-  whychoose.value = product.value?.whychoose.split(",") || []
-  note.value = product.value?.note.split(",") || []
+  functions.value = product.value?.functions?.split(",") || []
+  technical_parameters.value = product.value?.technical_parameters?.split(",") || []
+  advantages.value = product.value?.advantages?.split(",") || []
+  services.value = product.value?.services?.split(",") || []
+  whychoose.value = product.value?.whychoose?.split(",") || []
+  note.value = product.value?.note?.split(",") || []
   // Set values for other fields...
 }
 
@@ -366,7 +391,7 @@ const submitForm = () => {
       .then((res) => {
         // Handle success, maybe redirect to the viewing page
         ElMessage.success(`新建产品成功!`)
-        const id = res.data.id
+        const id = (res as any).data.id
         router.push({ path: "/products/productview", query: { id } })
       })
       .catch((error) => {

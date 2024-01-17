@@ -62,7 +62,7 @@ const emit = defineEmits(["update:selectedImages", "requestUploadData"])
 
 interface ExtendedUploadDataType extends Upload {
   url: string
-  selected: boolean
+  selected?: boolean
 }
 
 // Data

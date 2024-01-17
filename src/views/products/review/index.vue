@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, reactive, ref, watch } from "vue"
+import { computed, onMounted, reactive, ref, watch } from "vue"
 import {
   // createProductDataApi,
   // deleteProductDataApi,
@@ -12,7 +12,7 @@ import { ElMessage, FormRules, type FormInstance, ElMessageBox } from "element-p
 import { Search, Refresh, CirclePlus, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 // import router from "@/router"
-import { type ReviewData } from "@/api/products/review/types"
+import { newReviewData, type ReviewData } from "@/api/products/review/types"
 import { createReviewApi, deleteReviewApi, getReviewApi, updateReviewApi } from "@/api/products/review"
 import UploadComponent from "@/components/Upload/index.vue"
 
@@ -40,15 +40,22 @@ onMounted(() => {
   })
 })
 
+const selectProductId = computed({
+  get: () => formData.productId ?? undefined,
+  set: (val) => {
+    formData.productId = val as number
+  }
+})
+
 //#region 增
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = reactive({
-  productId: undefined,
+  productId: null as number | null,
   username: "",
-  score: undefined,
+  score: null as number | null,
   content: "",
-  images: []
+  images: [] as ProductImage[]
 })
 const formRules: FormRules = reactive({
   productId: [{ required: true, trigger: "blur", message: "请选择评价产品" }],
@@ -82,8 +89,15 @@ const handleCancle = () => {
 const handleCreate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
+      const requestData = {
+        username: formData.username,
+        score: formData.score ?? 5,
+        content: formData.content,
+        productId: formData.productId ?? 0,
+        images: formData.images
+      }
       if (currentUpdateId.value === undefined) {
-        createReviewApi(formData)
+        createReviewApi(requestData)
           .then(() => {
             ElMessage.success("新增成功")
             getReviewData()
@@ -93,7 +107,7 @@ const handleCreate = () => {
             resetForm()
           })
       } else {
-        updateReviewApi(+currentUpdateId.value, formData)
+        updateReviewApi(+currentUpdateId.value, requestData)
           .then(() => {
             ElMessage.success("修改成功")
             getReviewData()
@@ -110,9 +124,9 @@ const handleCreate = () => {
 }
 const resetForm = () => {
   currentUpdateId.value = undefined
-  formData.productId = undefined
+  formData.productId = null
   formData.username = ""
-  formData.score = undefined
+  formData.score = null
   formData.content = ""
   formData.images = []
 }
@@ -125,7 +139,7 @@ const handleDelete = (row: ReviewData) => {
     cancelButtonText: "取消",
     type: "warning"
   }).then(() => {
-    deleteReviewApi(row.id).then(() => {
+    deleteReviewApi(row.id as number).then(() => {
       ElMessage.success("删除成功")
       getReviewData()
     })
@@ -137,17 +151,17 @@ const handleDelete = (row: ReviewData) => {
 const currentUpdateId = ref<undefined | number>(undefined)
 const handleUpdate = (row: ReviewData) => {
   currentUpdateId.value = row.id as number
-  formData.productId = row.productId
+  formData.productId = row.productId ?? null
   formData.username = row.username as string
-  formData.score = row.score
+  formData.score = row.score ?? null
   formData.content = row.content as string
-  formData.images = row.images
+  formData.images = row.images as ProductImage[]
   dialogVisible.value = true
 }
 //#endregion
 
 //#region 查
-const reviewData = ref<ReviewData[]>([])
+const reviewData = ref<newReviewData[]>([])
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
   productId: ""
@@ -161,12 +175,11 @@ const getReviewData = () => {
   })
     .then(async (res) => {
       paginationData.total = res.data.total
-      reviewData.value = res.data.list
+      reviewData.value = res.data.list as newReviewData[]
       for (const review of reviewData.value) {
         review.productId = review.product?.id as number
-        console.log("reviewData", review)
         // 调用异步函数获取URL
-        if (review.images?.length > 0) {
+        if (review.images && review.images.length > 0) {
           for (const image of review.images) {
             console.log("image", image)
             image.url = await getImageUrl(image.id)
@@ -220,7 +233,7 @@ const removeImage = (image: ProductImage) => {
   })
 }
 
-const handleSelectedImages = async (selectedImages) => {
+const handleSelectedImages = async (selectedImages: any[]) => {
   // const imageIds = selectedImages.map((image) => image.id)
 
   // 调用批量处理接口
@@ -333,7 +346,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRevi
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
         <el-form-item prop="username" label="分类">
-          <el-select v-model="formData.productId" placeholder="请选择产品" value-key="name">
+          <el-select v-model="selectProductId" placeholder="请选择产品" value-key="name">
             <el-option v-for="product in products" :key="product.id" :label="product.model" :value="product.id" />
           </el-select>
         </el-form-item>

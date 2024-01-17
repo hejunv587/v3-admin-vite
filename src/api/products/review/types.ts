@@ -11,6 +11,22 @@ export interface ReviewData {
   create_time?: string
 }
 
+// 扩展 Upload 接口
+export interface ExtendedUpload extends Upload {
+  url?: string
+}
+
+export interface newReviewData {
+  id?: number
+  productId?: number
+  product?: GetProductData
+  username?: string
+  score: number
+  content: string
+  images?: ExtendedUpload[] // 使用 ExtendedUpload 替代 Upload
+  create_time?: string
+}
+
 export interface GetReviewRequestData {
   /** 当前页码 */
   currentPage: number

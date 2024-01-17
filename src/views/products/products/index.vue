@@ -1,13 +1,14 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
 import {
+  deleteProductDataApi,
   // createProductDataApi,
   // deleteProductDataApi,
   // updateProductDataApi,
   getProductDataApi
 } from "@/api/products/product/index"
 import { type GetProductData } from "@/api/products/product/types"
-import { type FormInstance } from "element-plus"
+import { ElMessage, ElMessageBox, type FormInstance } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import router from "@/router"
@@ -21,7 +22,7 @@ const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 //#region 增
-const dialogVisible = ref<boolean>(false)
+// const dialogVisible = ref<boolean>(false)
 const handleAdd = () => {
   router.push({ path: "/products/productedit" })
 
@@ -73,18 +74,18 @@ const handleAdd = () => {
 //#endregion
 
 //#region 删
-// const handleDelete = (row: GetProductData) => {
-//   ElMessageBox.confirm(`正在删除产品分类：${row.name}，确认删除？`, "提示", {
-//     confirmButtonText: "确定",
-//     cancelButtonText: "取消",
-//     type: "warning"
-//   }).then(() => {
-//     deleteProductDataApi(row.id).then(() => {
-//       ElMessage.success("删除成功")
-//       getProductData()
-//     })
-//   })
-// }
+const handleDelete = (row: GetProductData) => {
+  ElMessageBox.confirm(`正在删除产品分类：${row.name}，确认删除？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteProductDataApi(row.id + "").then(() => {
+      ElMessage.success("删除成功")
+      getProductData()
+    })
+  })
+}
 //#endregion
 
 //#region 改
@@ -208,24 +209,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getProd
         />
       </div>
     </el-card>
-
-    <!-- 新增/修改 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="currentUpdateId === undefined ? '新增分类' : '修改分类'"
-      @close="resetForm"
-      width="30%"
-    >
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="name" label="分类">
-          <el-input v-model="formData.name" placeholder="请输入" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCreate">确认</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 

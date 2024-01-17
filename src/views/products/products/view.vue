@@ -8,7 +8,7 @@
           style="max-width: 100%; max-height: 300px; object-fit: cover"
         />
         <p><strong>型号:</strong> {{ product.model }}</p>
-        <p><strong>系列:</strong> {{ product.serie.name }}</p>
+        <p><strong>系列:</strong> {{ product.serie?.name }}</p>
         <!-- Other fields... -->
 
         <p><strong>产品详情:</strong> {{ product.description }}</p>
@@ -199,6 +199,7 @@ type GetProductDataMore = GetProductData & {
 
 type ProductImage = Upload & {
   url: string
+  selected: boolean
 }
 
 const product = ref<GetProductDataMore>()
@@ -214,14 +215,30 @@ const getProductData = () => {
   getProductApi(productId)
     .then(async (res) => {
       product.value = res.data as GetProductDataMore
-      product.value.coverImageUrl = (await getImageUrl(product.value.cover.id)) || ""
-      const imagePromises = product.value.images.map(async (image) => {
-        return {
+      if (product.value.cover?.id) {
+        product.value.coverImageUrl = await getImageUrl(product.value.cover?.id)
+      }
+
+      // 检查 product.value.images 是否存在
+      if (product.value.images) {
+        const imagePromises = product.value.images.map(async (image) => ({
           ...image,
-          url: await getImageUrl(image.id)
-        }
-      })
-      uploadedImages.value = await Promise.all(imagePromises)
+          url: await getImageUrl(image.id),
+          selected: false // 根据 ExtendedUploadDataType 类型添加必要的属性
+        }))
+
+        uploadedImages.value = await Promise.all(imagePromises as Promise<ProductImage>[])
+      } else {
+        uploadedImages.value = [] // 如果没有 images，则设置为空数组
+      }
+
+      // const imagePromises = product.value.images?.map(async (image) => {
+      //   return {
+      //     ...image,
+      //     url: await getImageUrl(image.id)
+      //   }
+      // })
+      // uploadedImages.value = await Promise.all(imagePromises)
     })
     .catch()
     .finally(() => {
@@ -266,7 +283,7 @@ const addProductImages = (id: string, data: string[]) => {
   addProductImagesApi({ id, imageIds: data })
 }
 
-const handleSelectedImages = async (selectedImages) => {
+const handleSelectedImages = async (selectedImages: any[]) => {
   // console.log("父组件中接收到的:", selectedImages)
   // 处理从子组件传递过来的选中的图片
   // selectedImages.forEach((image) => {
@@ -376,7 +393,7 @@ const handleQADelete = (row: QA) => {
     cancelButtonText: "取消",
     type: "warning"
   }).then(() => {
-    removeProductQAApi(row.id).then(() => {
+    removeProductQAApi(row.id + "").then(() => {
       ElMessage.success("删除问答成功")
       getProductData()
     })
@@ -456,7 +473,7 @@ const handleAboutDelete = (row: About) => {
     cancelButtonText: "取消",
     type: "warning"
   }).then(() => {
-    removeAboutApi(row.id).then(() => {
+    removeAboutApi(row.id + "").then(() => {
       ElMessage.success("删除问答成功")
       getProductData()
     })

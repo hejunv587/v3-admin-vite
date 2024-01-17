@@ -107,7 +107,7 @@ function createRequest(service: AxiosInstance) {
         "Content-Type": "application/json"
         // withCredentials: true,
       },
-      // withCredentials: true,
+      withCredentials: true,
       timeout: 5000,
       baseURL: import.meta.env.VITE_BASE_API,
       data: {}
