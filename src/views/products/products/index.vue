@@ -15,7 +15,7 @@ import router from "@/router"
 
 defineOptions({
   // 命名当前组件
-  name: "产品管理"
+  name: "产品"
 })
 
 const loading = ref<boolean>(false)

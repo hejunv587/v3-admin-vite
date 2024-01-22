@@ -310,7 +310,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRevi
             <template #default="scope">
               <el-carousel :interval="4000" arrow="always">
                 <el-carousel-item v-for="image in scope.row.images" :key="image.id">
-                  <img :src="image.url" alt="图片" />
+                  <img :src="image.url" alt="图片" class="table-image" />
                 </el-carousel-item>
               </el-carousel>
             </template>
@@ -423,6 +423,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRevi
 .image-item {
   margin: 10px;
   position: relative;
+}
+
+.table-image {
+  width: auto;
+  height: 100%;
+  object-fit: cover;
 }
 
 .uploaded-image {

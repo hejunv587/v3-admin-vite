@@ -235,7 +235,7 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 
 defineOptions({
   // 命名当前组件
-  name: "编辑产品"
+  name: "产品编辑"
 })
 
 type GetProductDataMore = GetProductData & {
